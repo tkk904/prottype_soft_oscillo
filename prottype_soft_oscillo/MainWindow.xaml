@@ -1,0 +1,23 @@
+﻿<Window x:Class="RefreshDemo.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:oxy="http://oxyplot.org/wpf"
+        Title=" Demo " Height="480" Width="640">
+    <!-- Refresh by calling InvalidatePlot on the PlotModel from a non-UI thread -->
+    <DockPanel>
+        <WrapPanel DockPanel.Dock="Top">
+            <CheckBox IsChecked="True" Margin="9,10,11,10" Content="Show data 0" x:Name="cbShow0" Unchecked="CheckBox_Changed" Checked="CheckBox_Changed"/>
+            <CheckBox IsChecked="True" Margin="9,10,11,10" Content="Show data 1" x:Name="cbShow1" Unchecked="CheckBox_Changed" Checked="CheckBox_Changed"/>
+            <CheckBox IsChecked="True" Margin="9,10,11,10" Content="Show data 2" x:Name="cbShow2" Unchecked="CheckBox_Changed" Checked="CheckBox_Changed"/>
+            <CheckBox IsChecked="True" Margin="9,10,11,10" Content="Show data 3" x:Name="cbShow3" Unchecked="CheckBox_Changed" Checked="CheckBox_Changed"/>
+            <CheckBox IsChecked="True" Margin="9,10,11,10" Content="Show data 4" x:Name="cbShow4" Unchecked="CheckBox_Changed" Checked="CheckBox_Changed"/>
+            <CheckBox IsChecked="True" Margin="9,10,11,10" Content="Show data 5" x:Name="cbShow5" Unchecked="CheckBox_Changed" Checked="CheckBox_Changed"/>
+            <CheckBox IsChecked="True" Margin="9,10,11,10" Content="Show data 6" x:Name="cbShow6" Unchecked="CheckBox_Changed" Checked="CheckBox_Changed"/>
+            <CheckBox IsChecked="True" Margin="9,10,11,10" Content="Show data 7" x:Name="cbShow7" Unchecked="CheckBox_Changed" Checked="CheckBox_Changed"/>
+            <CheckBox IsChecked="True" Margin="9,10,11,10" Content="Show data 8" x:Name="cbShow8" Unchecked="CheckBox_Changed" Checked="CheckBox_Changed"/>
+        </WrapPanel>
+        <Grid >
+        <oxy:PlotView Model="{Binding PlotModel}"/>
+        </Grid>
+    </DockPanel>
+</Window>
