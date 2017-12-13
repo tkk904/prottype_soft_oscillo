@@ -12,11 +12,26 @@ namespace RefreshDemo
     using System.Linq;
     using System.Windows.Controls;
 
+    // DllImportに必要
+    using System.Runtime.InteropServices;
+
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
     public partial class MainWindow : Window
     {
+        //WPFアプリはAnyCPUでビルドすると実行ファイル内に32bitと64bit共存するようになります。
+        //DLLにはそのような機能はありませんので
+        //32bitまたは64bitかを整理してDllを動作環境下に配置しないと動作しません。
+        [DllImport("math_funcs.dll")]
+        private extern static double Add(double a, double b);
+
+        [DllImport("math_funcs.dll", CallingConvention = CallingConvention.Cdecl)]
+        private extern static double Subtract(double a, double b);
+
+        [DllImport("math_funcs.dll", CallingConvention = CallingConvention.Cdecl)]
+        private extern static double Multiply(double a, double b);
+
         public PlotModel PlotModel { get; set; }
         const int MAX_DATA_COUNT = 9;
         private bool[] is_visible = Enumerable.Repeat<bool>(true, MAX_DATA_COUNT).ToArray();
@@ -44,17 +59,16 @@ namespace RefreshDemo
 
                             //sin関数を使ってオシロスコープ感を出す
                             // (0.01 + i * 0.2) -> 変化を目立たせるため。
-                            this.PlotModel.Series[i] = new FunctionSeries(Math.Sin, x, x + 4, 0.01 + i * 0.2);
+                            this.PlotModel.Series[i] = new FunctionSeries(Math.Sin, x, x + 4, 0.01 + Multiply((double) i , 0.2));
                             this.PlotModel.Series[i].IsVisible = is_visible[i];
                         }
                     }
-                    x += 0.1;
+                    x = Add(x,0.1);
                     PlotModel.InvalidatePlot(true);
                     //100ミリ秒休止
                     Thread.Sleep(100);
                 }
             };
-
             worker.RunWorkerAsync();
             this.Closed += (s, e) => worker.CancelAsync();
         }
