@@ -95,6 +95,10 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\MotionSensorFunc\MotionSensorFunc\MotionSensorFunc.vcxproj">
+      <Project>{906856f1-85d4-46da-968b-95ca09848aac}</Project>
+      <Name>MotionSensorFunc</Name>
+    </ProjectReference>
     <ProjectReference Include="..\oxyplot\OxyPlot.OpenXml\OxyPlot.OpenXml.csproj">
       <Project>{bb4fa452-a96a-4c47-aa65-7e88f6fae873}</Project>
       <Name>OxyPlot.OpenXml</Name>

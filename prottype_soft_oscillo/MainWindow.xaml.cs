@@ -23,14 +23,23 @@ namespace RefreshDemo
         //WPFアプリはAnyCPUでビルドすると実行ファイル内に32bitと64bit共存するようになります。
         //DLLにはそのような機能はありませんので
         //32bitまたは64bitかを整理してDllを動作環境下に配置しないと動作しません。
-        [DllImport("math_funcs.dll")]
-        private extern static double Add(double a, double b);
+        [DllImport("MotionSensorFunc.dll")]
+        private extern static bool Initialize();
 
-        [DllImport("math_funcs.dll", CallingConvention = CallingConvention.Cdecl)]
-        private extern static double Subtract(double a, double b);
+        [DllImport("MotionSensorFunc.dll")]
+        private extern static void Finilize();
 
-        [DllImport("math_funcs.dll", CallingConvention = CallingConvention.Cdecl)]
-        private extern static double Multiply(double a, double b);
+        [DllImport("MotionSensorFunc.dll")]
+        private extern static bool Start(string SpindleComName, string MotionComName);
+
+        [DllImport("MotionSensorFunc.dll")]
+        private extern static void Stop();
+
+        [DllImport("MotionSensorFunc.dll")]
+        private extern static int GetData(IntPtr Data, int DataSize);
+
+        [DllImport("MotionSensorFunc.dll")]
+        private extern static int GetError();
 
         public PlotModel PlotModel { get; set; }
         const int MAX_DATA_COUNT = 9;
@@ -40,6 +49,13 @@ namespace RefreshDemo
         {
             InitializeComponent();
             
+            //DLL　初期化
+            Initialize();
+            
+            //DLL　動作開始
+            string hoge = "COM1";
+            Start(hoge, "COM2");
+
             //Demo (sin: -1.0 -> 1.0)
             this.PlotModel = CreatePlotModel(-1, 1);
 
@@ -48,29 +64,42 @@ namespace RefreshDemo
             double x = 0;
             worker.DoWork += (s, e) =>
             {
+                //DLLからのデータ取得領域確保
+                double[] ary = new double[8];
+　
                 //バックグラウンドワーカーを作成する（作業スレッドを作成すると同じ）
                 //ここでセンサーから値を取得する？
                 while (!worker.CancellationPending)
                 {
                     lock (this.PlotModel.SyncRoot)
                     {
+                        //データ取得処理
+                        GetDataProc(ref ary);
+
                         this.PlotModel.Title = "Plot updated: " + DateTime.Now;
                         for (int i = 0; i < MAX_DATA_COUNT; ++i) {
 
                             //sin関数を使ってオシロスコープ感を出す
                             // (0.01 + i * 0.2) -> 変化を目立たせるため。
-                            this.PlotModel.Series[i] = new FunctionSeries(Math.Sin, x, x + 4, 0.01 + Multiply((double) i , 0.2));
+                            this.PlotModel.Series[i] = new FunctionSeries(Math.Sin, x, x + 4, 0.01 + i * 0.2);
                             this.PlotModel.Series[i].IsVisible = is_visible[i];
                         }
                     }
-                    x = Add(x,0.1);
+                    x += 0.1;
                     PlotModel.InvalidatePlot(true);
                     //100ミリ秒休止
                     Thread.Sleep(100);
                 }
             };
             worker.RunWorkerAsync();
-            this.Closed += (s, e) => worker.CancelAsync();
+            this.Closed += (s, e) => {
+                worker.CancelAsync();
+                //DLL　動作終了
+                Stop();
+
+                //DLL　終了
+                Finilize();
+            };
         }
 
         private static PlotModel CreatePlotModel(double min, double max)
@@ -101,6 +130,19 @@ namespace RefreshDemo
             var ck = (sender as CheckBox);
             String number = ck.Name;
             return int.Parse(number.Substring(number.Length - 1, 1));
+        }
+
+        private  void  GetDataProc(ref double[] ary)
+        {
+            int len = ary.Length;
+
+            //DLL側がアクセスできる領域に確保する
+            GCHandle gcH = GCHandle.Alloc(ary, GCHandleType.Pinned);
+
+            //DLL　データ取得
+            int re = GetData(gcH.AddrOfPinnedObject(),len);
+
+            gcH.Free();
         }
     }
 }
