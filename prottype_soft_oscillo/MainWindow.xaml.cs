@@ -141,6 +141,11 @@ namespace RefreshDemo
 
             //DLL　データ取得
             int re = GetData(gcH.AddrOfPinnedObject(),len);
+            /*
+            if (re > 0) {
+                GetError();
+            }
+            */
 
             gcH.Free();
         }
