@@ -14,6 +14,8 @@ namespace RefreshDemo
 
     // DllImportに必要
     using System.Runtime.InteropServices;
+    using System.Runtime.CompilerServices;
+    using System.Windows.Threading;
 
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -44,11 +46,18 @@ namespace RefreshDemo
         public PlotModel PlotModel { get; set; }
         const int MAX_DATA_COUNT = 9;
         private bool[] is_visible = Enumerable.Repeat<bool>(true, MAX_DATA_COUNT).ToArray();
+        private double[] offset = new double[MAX_DATA_COUNT];
+        private double[] scale = new double[MAX_DATA_COUNT];
 
         public MainWindow()
         {
             InitializeComponent();
-            
+
+            this.DataIndex.SelectedIndex = 0;
+
+            //オフセット値初期化
+            InitializeOffset();
+
             //DLL　初期化
             Initialize();
             
@@ -57,11 +66,12 @@ namespace RefreshDemo
             Start(hoge, "COM2");
 
             //Demo (sin: -1.0 -> 1.0)
-            this.PlotModel = CreatePlotModel(-1, 1);
+            this.PlotModel = CreatePlotModel(-5, 5);
 
             DataContext = this;
             var worker = new BackgroundWorker { WorkerSupportsCancellation = true };
             double x = 0;
+
             worker.DoWork += (s, e) =>
             {
                 //DLLからのデータ取得領域確保
@@ -79,9 +89,15 @@ namespace RefreshDemo
                         this.PlotModel.Title = "Plot updated: " + DateTime.Now;
                         for (int i = 0; i < MAX_DATA_COUNT; ++i) {
 
+                            Func<double, double> convert = delegate (double a)
+                            {
+                                double r = Math.Sin(a);
+                                return r * scale[i] + offset[i];
+                            };
+
                             //sin関数を使ってオシロスコープ感を出す
                             // (0.01 + i * 0.2) -> 変化を目立たせるため。
-                            this.PlotModel.Series[i] = new FunctionSeries(Math.Sin, x, x + 4, 0.01 + i * 0.2);
+                            this.PlotModel.Series[i] = new FunctionSeries(convert, x, x + 4, 0.01 + i * 0.2);
                             this.PlotModel.Series[i].IsVisible = is_visible[i];
                         }
                     }
@@ -119,9 +135,9 @@ namespace RefreshDemo
 
         private void CheckBox_Changed(object sender, RoutedEventArgs e)
         {
-            var index = get_checkbox_index(sender);
+            //var index = get_checkbox_index(sender);
             //チェックボックスで表示可否を操作する
-            is_visible[index] = (sender as CheckBox)?.IsChecked ?? false;
+            is_visible[DataIndex.SelectedIndex] = (sender as CheckBox)?.IsChecked ?? false;
         }
 
         private int get_checkbox_index(object sender)
@@ -148,6 +164,48 @@ namespace RefreshDemo
             */
 
             gcH.Free();
+        }
+
+        private void InitializeOffset()
+        {
+            for (int i = 0; i < MAX_DATA_COUNT; ++i){
+                offset[i] = 0.0;
+                scale[i] = 1.1;
+            }
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        private void SetProperty<T>(ref T field, T value, [CallerMemberName]string propertyName = null)
+        {
+            field = value;
+            var h = this.PropertyChanged;
+            if (h != null) { h(this, new PropertyChangedEventArgs(propertyName)); }
+        }
+
+        public double Scale
+        {
+            get { return scale[DataIndex.SelectedIndex]; }
+            set { this.SetProperty(ref scale[DataIndex.SelectedIndex], value); }
+        }
+
+        public double Offset
+        {
+            get { return offset[DataIndex.SelectedIndex]; }
+            set { this.SetProperty(ref offset[DataIndex.SelectedIndex], value); }
+        }
+
+         public bool Visible
+        {
+            get { return is_visible[DataIndex.SelectedIndex]; }
+            set { this.SetProperty(ref is_visible[DataIndex.SelectedIndex], value); }
+        }
+
+        private void DataIndex_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            this.OffsetTextBox.Text = offset[DataIndex.SelectedIndex].ToString();
+            this.ScaleTextBox.Text = scale[DataIndex.SelectedIndex].ToString();
+            this.ShowDataCheck.IsChecked = is_visible[DataIndex.SelectedIndex];
         }
     }
 }
