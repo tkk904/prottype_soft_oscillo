@@ -22,6 +22,7 @@
             <Label Margin="9,15,1,10" Content="Offset : "/>
             <TextBox x:Name="OffsetTextBox" Margin="1,15,11,10" Height="23" TextWrapping="Wrap" Text="{Binding Offset}" Width="120"/>
             <CheckBox x:Name="ShowDataCheck" Margin="9,18,11,10"  IsChecked="{Binding Visible}" Content="Show data" Unchecked="CheckBox_Changed" Checked="CheckBox_Changed"/>
+            <ComboBox x:Name="NotifyDeviceName" Margin="9,15,1,10" Width="120" SelectionChanged="NotifyDeviceName_SelectionChanged"/>
         </WrapPanel>
         <Grid >
         <oxy:PlotView Model="{Binding PlotModel}"/>

@@ -4,6 +4,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 15.0.27004.2008
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "prottype_soft_oscillo", "prottype_soft_oscillo\prottype_soft_oscillo.csproj", "{5A785189-943B-4D69-BA51-8D4570F4EC9B}"
+	ProjectSection(ProjectDependencies) = postProject
+		{740CFED6-C509-46F5-91D1-EAD5FC453958} = {740CFED6-C509-46F5-91D1-EAD5FC453958}
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OxyPlot", "oxyplot\OxyPlot\OxyPlot.csproj", "{10F889E7-E539-444F-A56C-02BCED3B85C9}"
 EndProject
@@ -20,6 +23,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OxyPlot.Wpf", "oxyplot\OxyP
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MotionSensorFunc", "MotionSensorFunc\MotionSensorFunc\MotionSensorFunc.vcxproj", "{906856F1-85D4-46DA-968B-95CA09848AAC}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NotifyDeviceFunc", "NotifyDeviceFunc\NotifyDeviceFunc\NotifyDeviceFunc.vcxproj", "{740CFED6-C509-46F5-91D1-EAD5FC453958}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -101,6 +106,16 @@ Global
 		{906856F1-85D4-46DA-968B-95CA09848AAC}.Release|x64.Build.0 = Release|x64
 		{906856F1-85D4-46DA-968B-95CA09848AAC}.Release|x86.ActiveCfg = Release|Win32
 		{906856F1-85D4-46DA-968B-95CA09848AAC}.Release|x86.Build.0 = Release|Win32
+		{740CFED6-C509-46F5-91D1-EAD5FC453958}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{740CFED6-C509-46F5-91D1-EAD5FC453958}.Debug|x64.ActiveCfg = Debug|x64
+		{740CFED6-C509-46F5-91D1-EAD5FC453958}.Debug|x64.Build.0 = Debug|x64
+		{740CFED6-C509-46F5-91D1-EAD5FC453958}.Debug|x86.ActiveCfg = Debug|Win32
+		{740CFED6-C509-46F5-91D1-EAD5FC453958}.Debug|x86.Build.0 = Debug|Win32
+		{740CFED6-C509-46F5-91D1-EAD5FC453958}.Release|Any CPU.ActiveCfg = Release|Win32
+		{740CFED6-C509-46F5-91D1-EAD5FC453958}.Release|x64.ActiveCfg = Release|x64
+		{740CFED6-C509-46F5-91D1-EAD5FC453958}.Release|x64.Build.0 = Release|x64
+		{740CFED6-C509-46F5-91D1-EAD5FC453958}.Release|x86.ActiveCfg = Release|Win32
+		{740CFED6-C509-46F5-91D1-EAD5FC453958}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

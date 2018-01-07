@@ -16,6 +16,7 @@ namespace RefreshDemo
     using System.Runtime.InteropServices;
     using System.Runtime.CompilerServices;
     using System.Windows.Threading;
+    using System.IO.Ports;
 
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -25,6 +26,10 @@ namespace RefreshDemo
         //WPFアプリはAnyCPUでビルドすると実行ファイル内に32bitと64bit共存するようになります。
         //DLLにはそのような機能はありませんので
         //32bitまたは64bitかを整理してDllを動作環境下に配置しないと動作しません。
+
+        //---------------------------------------------------------------------
+        //MotionSensorFunc.dll
+        //---------------------------------------------------------------------
         [DllImport("MotionSensorFunc.dll")]
         private extern static bool Initialize();
 
@@ -43,20 +48,38 @@ namespace RefreshDemo
         [DllImport("MotionSensorFunc.dll")]
         private extern static int GetError();
 
+        //---------------------------------------------------------------------
+        //NotifyDeviceFunc.dll
+        //---------------------------------------------------------------------
+        [DllImport("NotifyDeviceFunc.dll")]
+        private extern static bool Start(string PortName);
+
+        [DllImport("NotifyDeviceFunc.dll")]
+        private extern static void StopNotify();
+
+        [DllImport("NotifyDeviceFunc.dll")]
+        private extern static void Notify(int time);
+
         public PlotModel PlotModel { get; set; }
         const int MAX_DATA_COUNT = 9;
         private bool[] is_visible = Enumerable.Repeat<bool>(true, MAX_DATA_COUNT).ToArray();
         private double[] offset = new double[MAX_DATA_COUNT];
         private double[] scale = new double[MAX_DATA_COUNT];
 
+        //---------------------------------------------------------------------
+        //シリアルポートの列挙は以下で可能
+        //---------------------------------------------------------------------
+        string[] PortList = SerialPort.GetPortNames();
+
         public MainWindow()
         {
             InitializeComponent();
 
+            //データインデックスを0に予め設定する
             this.DataIndex.SelectedIndex = 0;
 
             //オフセット値初期化
-            InitializeOffset();
+            InitializeControl();
 
             //DLL　初期化
             Initialize();
@@ -166,11 +189,14 @@ namespace RefreshDemo
             gcH.Free();
         }
 
-        private void InitializeOffset()
+        private void InitializeControl()
         {
             for (int i = 0; i < MAX_DATA_COUNT; ++i){
                 offset[i] = 0.0;
                 scale[i] = 1.1;
+            }
+            foreach (var a in PortList) {
+                this.NotifyDeviceName.Items.Add(a);
             }
         }
 
@@ -206,6 +232,13 @@ namespace RefreshDemo
             this.OffsetTextBox.Text = offset[DataIndex.SelectedIndex].ToString();
             this.ScaleTextBox.Text = scale[DataIndex.SelectedIndex].ToString();
             this.ShowDataCheck.IsChecked = is_visible[DataIndex.SelectedIndex];
+        }
+
+        private void NotifyDeviceName_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            //Notify test
+            Start(NotifyDeviceName.SelectedItem.ToString());
+            Notify(1000);
         }
     }
 }
