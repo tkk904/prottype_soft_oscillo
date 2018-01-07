@@ -239,6 +239,7 @@ namespace RefreshDemo
             //Notify test
             Start(NotifyDeviceName.SelectedItem.ToString());
             Notify(1000);
+            StopNotify();
         }
     }
 }
