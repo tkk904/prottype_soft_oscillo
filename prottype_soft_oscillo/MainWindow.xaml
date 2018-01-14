@@ -6,7 +6,7 @@
         KeyDown="Window_KeyDown">
     <!-- Refresh by calling InvalidatePlot on the PlotModel from a non-UI thread -->
     <DockPanel>
-        <WrapPanel DockPanel.Dock="Top" Height="50">
+        <WrapPanel DockPanel.Dock="Top" Height="100">
             <ComboBox Margin="9,15,11,10" x:Name="DataIndex"  Height="23" SelectionChanged="DataIndex_SelectionChanged" >
                 <ComboBoxItem Content="0" />
                 <ComboBoxItem Content="1" />
@@ -24,9 +24,15 @@
             <TextBox x:Name="OffsetTextBox" Margin="1,15,11,10" Height="23" TextWrapping="Wrap" Text="{Binding Offset}" Width="120"/>
             <CheckBox x:Name="ShowDataCheck" Margin="9,18,11,10"  IsChecked="{Binding Visible}" Content="Show data" Unchecked="CheckBox_Changed" Checked="CheckBox_Changed"/>
             <ComboBox x:Name="NotifyDeviceName" Margin="9,15,1,10" Width="120" SelectionChanged="NotifyDeviceName_SelectionChanged"/>
+            <Label Margin="9,20,50 ,10" Content=""/>
+            <Label Margin="9,10,1,10" Content="Primad : "/>
+            <ComboBox Margin="9,10,1,10" x:Name="PrimadoPortName" Width="120" SelectionChanged="PrimadoPortName_SelectionChanged"/>
+            <Label Margin="9,10,1,10" Content="TSND : "/>
+            <ComboBox Margin="9,10,1,10" x:Name="TSNDPortName" Width="120" SelectionChanged="TSNDPortName_SelectionChanged"/>
+            <Button  Margin="100,10,1,10"  x:Name="OscilloStart" Content="Start" Width="75" Click="OscilloStart_Click" />
         </WrapPanel>
         <Grid >
-        <oxy:PlotView Model="{Binding PlotModel}"/>
+            <oxy:PlotView Model="{Binding PlotModel}"/>
         </Grid>
     </DockPanel>
 </Window>

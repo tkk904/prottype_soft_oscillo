@@ -69,13 +69,16 @@ namespace RefreshDemo
         private double[] offset = new double[MAX_DATA_COUNT];
         private double[] scale = new double[MAX_DATA_COUNT];
         private bool is_device_start = false;
-        private bool is_stop_resrve = false;
+        private bool is_stop_resrve = true;
         private int tickcount = 0;
-        private bool is_stop = false;
+        private bool is_stop = true;
         private int THREAD_SLEEP_TIME = 100;
         const double k = X_DISPLAY_RANGE;
         const int DATA_BUF_SIZE =(int) (k / 0.01);
-        private double[] data_buf = new double[DATA_BUF_SIZE];
+        private double[,] data_buf = new double[8,DATA_BUF_SIZE];
+        private string primado_name="";
+        private string tsdn_name = "";
+        private bool start_drill_monitor = false;
 
         //---------------------------------------------------------------------
         //シリアルポートの列挙は以下で可能
@@ -94,10 +97,6 @@ namespace RefreshDemo
 
             //DLL　初期化
             Initialize();
-            
-            //DLL　動作開始
-            string hoge = "COM1";
-            Start(hoge, "COM2");
 
             //Demo (sin: -1.0 -> 1.0)
             this.PlotModel = CreatePlotModel(-5, 5);
@@ -159,10 +158,11 @@ namespace RefreshDemo
                                     //データをバッファリングしないとデータが表示されませんので
                                     //ため込んだら表示するような処理が必要です。
 /*
+                                    double l =ary[i];
                                     int divide = (int)((double)(X_DISPLAY_RANGE) / 0.01);
                                     int index = ((int)(a / 0.01)) % divide; 
                                     if (data_buf[index] > 0){
-                                        r =  data_buf[index];
+                                        r =  data_buf[i,index];
                                     }else{
                                         r = 0;
                                     }
@@ -251,10 +251,16 @@ namespace RefreshDemo
             }
             foreach (var a in PortList) {
                 this.NotifyDeviceName.Items.Add(a);
+                this.PrimadoPortName.Items.Add(a);
+                this.TSNDPortName.Items.Add(a);
             }
-            
-            for (int i = 0; i < DATA_BUF_SIZE; ++i){
-                this.data_buf[i] = -1; 
+
+            for (int i = 0; i < 8; ++i)
+            {
+                for (int j = 0; j < DATA_BUF_SIZE; ++j)
+                {
+                    this.data_buf[i,j] = -1;
+                }
             }
         }
 
@@ -302,18 +308,45 @@ namespace RefreshDemo
         {
             //Spaceキーが押されたらデバイスに通知をします。
             if (e.Key == Key.Space) {
-                is_stop_resrve = !is_stop_resrve;
-                if (is_stop_resrve) {
-                    tickcount = Environment.TickCount;
-                    //デバイスのポートがOpenしていたら通知処理を実行します。
-                    if (is_device_start) {
-                        Notify(1000);
-                    }
-                } else {
-                    tickcount = 0;
-                    is_stop = false;
-                }
+                stop_core();
+            }
+        }
 
+        private void stop_core()
+        {
+            //ドリルモニターがスタート済みでないと解除しない
+            if( !start_drill_monitor )return;
+
+            //
+            is_stop_resrve = !is_stop_resrve;
+            if (is_stop_resrve) {
+                tickcount = Environment.TickCount;
+                //デバイスのポートがOpenしていたら通知処理を実行します。
+                if (is_device_start){
+                    Notify(1000);
+                }
+            } else {
+                tickcount = 0;
+                is_stop = false;
+            }
+        }
+
+        private void PrimadoPortName_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            primado_name = this.PrimadoPortName.SelectedItem.ToString();
+        }
+
+        private void TSNDPortName_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            tsdn_name = this.TSNDPortName.SelectedItem.ToString();
+        }
+
+        private void OscilloStart_Click(object sender, RoutedEventArgs e)
+        {
+            if(primado_name.Length > 0 && tsdn_name.Length > 0){
+                //DLL　動作開始
+                start_drill_monitor = Start(primado_name, tsdn_name);
+                stop_core();
             }
         }
     }
