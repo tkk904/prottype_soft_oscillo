@@ -17,6 +17,8 @@ namespace RefreshDemo
     using System.Runtime.CompilerServices;
     using System.Windows.Threading;
     using System.IO.Ports;
+    using System.Windows.Input;
+    using System.Diagnostics;
 
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -61,10 +63,19 @@ namespace RefreshDemo
         private extern static void Notify(int time);
 
         public PlotModel PlotModel { get; set; }
-        const int MAX_DATA_COUNT = 9;
+        const int MAX_DATA_COUNT = 4;
+        const int X_DISPLAY_RANGE = 4;
         private bool[] is_visible = Enumerable.Repeat<bool>(true, MAX_DATA_COUNT).ToArray();
         private double[] offset = new double[MAX_DATA_COUNT];
         private double[] scale = new double[MAX_DATA_COUNT];
+        private bool is_device_start = false;
+        private bool is_stop_resrve = false;
+        private int tickcount = 0;
+        private bool is_stop = false;
+        private int THREAD_SLEEP_TIME = 100;
+        const double k = X_DISPLAY_RANGE;
+        const int DATA_BUF_SIZE =(int) (k / 0.01);
+        private double[] data_buf = new double[DATA_BUF_SIZE];
 
         //---------------------------------------------------------------------
         //シリアルポートの列挙は以下で可能
@@ -94,6 +105,7 @@ namespace RefreshDemo
             DataContext = this;
             var worker = new BackgroundWorker { WorkerSupportsCancellation = true };
             double x = 0;
+            double stop_x = 0;
 
             worker.DoWork += (s, e) =>
             {
@@ -104,6 +116,21 @@ namespace RefreshDemo
                 //ここでセンサーから値を取得する？
                 while (!worker.CancellationPending)
                 {
+                    if (is_stop_resrve) {
+                        int count = Environment.TickCount - tickcount;
+                        if (count < THREAD_SLEEP_TIME) {
+                             stop_x = x;
+                        }
+                        if (count > 1000) {
+                            is_stop = true;
+                        }
+                    };
+                    if (is_stop) {
+                        //100ミリ秒休止
+                        Thread.Sleep(THREAD_SLEEP_TIME);
+                        continue;
+                    }
+
                     lock (this.PlotModel.SyncRoot)
                     {
                         //データ取得処理
@@ -112,22 +139,49 @@ namespace RefreshDemo
                         this.PlotModel.Title = "Plot updated: " + DateTime.Now;
                         for (int i = 0; i < MAX_DATA_COUNT; ++i) {
 
-                            Func<double, double> convert = delegate (double a)
-                            {
-                                double r = Math.Sin(a);
-                                return r * scale[i] + offset[i];
-                            };
+                            //表示データを操作します。
+                            Func<double, double> convert;
+                            if (i == 3) {
+                                convert = delegate (double a)
+                                {
+                                    if(is_stop_resrve ){
+                                        return (stop_x + X_DISPLAY_RANGE) < a ? 1 : 0;    
+                                    }else{ 
+                                        return 0;
+                                    }
+                                };
+                            } else {
+                                convert = delegate (double a)
+                                {
+                                    
+                                    double r = Math.Sin(a);
+                                    
+                                    //データをバッファリングしないとデータが表示されませんので
+                                    //ため込んだら表示するような処理が必要です。
+/*
+                                    int divide = (int)((double)(X_DISPLAY_RANGE) / 0.01);
+                                    int index = ((int)(a / 0.01)) % divide; 
+                                    if (data_buf[index] > 0){
+                                        r =  data_buf[index];
+                                    }else{
+                                        r = 0;
+                                    }
+*/
+                                    return r * scale[i] + offset[i];
+                                };
+                            }
 
                             //sin関数を使ってオシロスコープ感を出す
                             // (0.01 + i * 0.2) -> 変化を目立たせるため。
-                            this.PlotModel.Series[i] = new FunctionSeries(convert, x, x + 4, 0.01 + i * 0.2);
+                            this.PlotModel.Series[i] = new FunctionSeries(convert, x, x + X_DISPLAY_RANGE,0.01);
                             this.PlotModel.Series[i].IsVisible = is_visible[i];
+                            this.PlotModel.Series[i].TextColor=OxyColor.FromArgb(0,0,0,0);
                         }
                     }
                     x += 0.1;
                     PlotModel.InvalidatePlot(true);
                     //100ミリ秒休止
-                    Thread.Sleep(100);
+                    Thread.Sleep(THREAD_SLEEP_TIME);
                 }
             };
             worker.RunWorkerAsync();
@@ -149,7 +203,7 @@ namespace RefreshDemo
             model.Axes.Add(verticalAxis);
             model.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom });
 
-            //表示したい折れ線グラフ数分、領域を確保する（今回は9）
+            //表示したい折れ線グラフ数分、領域を確保する（今回は4）
             for (int i = 0; i < MAX_DATA_COUNT; ++i) {
                 model.Series.Add(new FunctionSeries());
             }
@@ -198,6 +252,10 @@ namespace RefreshDemo
             foreach (var a in PortList) {
                 this.NotifyDeviceName.Items.Add(a);
             }
+            
+            for (int i = 0; i < DATA_BUF_SIZE; ++i){
+                this.data_buf[i] = -1; 
+            }
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -237,9 +295,26 @@ namespace RefreshDemo
         private void NotifyDeviceName_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             //Notify test
-            Start(NotifyDeviceName.SelectedItem.ToString());
-            Notify(1000);
-            StopNotify();
+            is_device_start = Start(NotifyDeviceName.SelectedItem.ToString());
+        }
+        
+        private void Window_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            //Spaceキーが押されたらデバイスに通知をします。
+            if (e.Key == Key.Space) {
+                is_stop_resrve = !is_stop_resrve;
+                if (is_stop_resrve) {
+                    tickcount = Environment.TickCount;
+                    //デバイスのポートがOpenしていたら通知処理を実行します。
+                    if (is_device_start) {
+                        Notify(1000);
+                    }
+                } else {
+                    tickcount = 0;
+                    is_stop = false;
+                }
+
+            }
         }
     }
 }
