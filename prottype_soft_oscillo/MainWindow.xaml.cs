@@ -347,11 +347,11 @@ namespace RefreshDemo
 
         private void OscilloStart_Click(object sender, RoutedEventArgs e)
         {
-            //if(primado_name.Length > 0 && tsdn_name.Length > 0){
+            if(primado_name.Length > 0 && tsdn_name.Length > 0){
                 //DLL　動作開始
                 start_drill_monitor = Start(primado_name, tsdn_name);
                 stop_core();
-            //}
+            }
         }
     }
 }
