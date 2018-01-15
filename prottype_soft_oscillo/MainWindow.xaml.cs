@@ -63,8 +63,14 @@ namespace RefreshDemo
         private extern static void Notify(int time);
 
         public PlotModel PlotModel { get; set; }
+        
         const int MAX_DATA_COUNT = 4;
-        const int X_DISPLAY_RANGE = 4;
+        const int X_DISPLAY_RANGE = 20;
+        const int THREAD_SLEEP_TIME = 100;
+        const double DX = (double)(THREAD_SLEEP_TIME) / 1000;
+        const double k = X_DISPLAY_RANGE;
+        const int DATA_BUF_SIZE = (int)(k / DX);
+ 
         private bool[] is_visible = Enumerable.Repeat<bool>(true, MAX_DATA_COUNT).ToArray();
         private double[] offset = new double[MAX_DATA_COUNT];
         private double[] scale = new double[MAX_DATA_COUNT];
@@ -72,9 +78,6 @@ namespace RefreshDemo
         private bool is_stop_resrve = true;
         private int tickcount = 0;
         private bool is_stop = true;
-        private int THREAD_SLEEP_TIME = 100;
-        const double k = X_DISPLAY_RANGE;
-        const int DATA_BUF_SIZE =(int) (k / 0.01);
         private double[,] data_buf = new double[8,DATA_BUF_SIZE];
         private string primado_name="";
         private string tsdn_name = "";
@@ -120,7 +123,7 @@ namespace RefreshDemo
                         if (count < THREAD_SLEEP_TIME) {
                              stop_x = x;
                         }
-                        if (count > 1000) {
+                        if (count > 1500) {
                             is_stop = true;
                         }
                     };
@@ -150,35 +153,36 @@ namespace RefreshDemo
                                     }
                                 };
                             } else {
+
+                                int input_index = ((int)(x / DX)) % DATA_BUF_SIZE;
+                                data_buf[i, input_index] = ary[i];
                                 convert = delegate (double a)
                                 {
-                                    
-                                    double r = Math.Sin(a);
+                                    double r = 0;
                                     
                                     //データをバッファリングしないとデータが表示されませんので
                                     //ため込んだら表示するような処理が必要です。
-/*
-                                    double l =ary[i];
-                                    int divide = (int)((double)(X_DISPLAY_RANGE) / 0.01);
-                                    int index = ((int)(a / 0.01)) % divide; 
-                                    if (data_buf[index] > 0){
-                                        r =  data_buf[i,index];
-                                    }else{
-                                        r = 0;
+                                    if(a - X_DISPLAY_RANGE > 0){
+                                        int index = ((int)(a / DX)) % DATA_BUF_SIZE; 
+                                        if (data_buf[i,index] > 0){
+                                            r =  data_buf[i,index];
+                                        }else{
+                                            r = 0;
+                                        }
                                     }
-*/
+
                                     return r * scale[i] + offset[i];
                                 };
                             }
 
                             //sin関数を使ってオシロスコープ感を出す
                             // (0.01 + i * 0.2) -> 変化を目立たせるため。
-                            this.PlotModel.Series[i] = new FunctionSeries(convert, x, x + X_DISPLAY_RANGE,0.01);
+                            this.PlotModel.Series[i] = new FunctionSeries(convert, x, x + X_DISPLAY_RANGE, DX);
                             this.PlotModel.Series[i].IsVisible = is_visible[i];
                             this.PlotModel.Series[i].TextColor=OxyColor.FromArgb(0,0,0,0);
                         }
                     }
-                    x += 0.1;
+                    x += DX;
                     PlotModel.InvalidatePlot(true);
                     //100ミリ秒休止
                     Thread.Sleep(THREAD_SLEEP_TIME);
@@ -343,11 +347,11 @@ namespace RefreshDemo
 
         private void OscilloStart_Click(object sender, RoutedEventArgs e)
         {
-            if(primado_name.Length > 0 && tsdn_name.Length > 0){
+            //if(primado_name.Length > 0 && tsdn_name.Length > 0){
                 //DLL　動作開始
                 start_drill_monitor = Start(primado_name, tsdn_name);
                 stop_core();
-            }
+            //}
         }
     }
 }
